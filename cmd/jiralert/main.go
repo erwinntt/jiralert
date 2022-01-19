@@ -53,6 +53,7 @@ var (
 
 	// Version is the build version, set by make to latest git tag/hash via `-ldflags "-X main.Version=$(VERSION)"`.
 	Version = "<local build>"
+	Tag     = "1.1-ssl-skip-verify-r5"
 )
 
 func main() {
@@ -64,7 +65,7 @@ func main() {
 	flag.Parse()
 
 	var logger = setupLogger(*logLevel, *logFormat)
-	level.Info(logger).Log("msg", "starting JIRAlert", "version", Version)
+	level.Info(logger).Log("msg", "starting JIRAlert", "version", Version, "tag", Tag)
 
 	if !*hashJiraLabel {
 		level.Warn(logger).Log("msg", "Using deprecated jira label generation - "+

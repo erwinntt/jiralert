@@ -111,6 +111,7 @@ func main() {
 			Password:  string(conf.Password),
 			Transport: tr,
 		}
+		level.Warn(logger).Log("msg", "Insecure skip verify", "InsecureSkipVerify", tr.TLSClientConfig.InsecureSkipVerify)
 		client, err := jira.NewClient(tp.Client(), conf.APIURL)
 		if err != nil {
 			errorHandler(w, http.StatusInternalServerError, err, conf.Name, &data, logger)

@@ -14,6 +14,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -101,10 +102,14 @@ func main() {
 		}
 		level.Debug(logger).Log("msg", "  matched receiver", "receiver", conf.Name)
 
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
 		// TODO: Consider reusing notifiers or just jira clients to reuse connections.
 		tp := jira.BasicAuthTransport{
-			Username: conf.User,
-			Password: string(conf.Password),
+			Username:  conf.User,
+			Password:  string(conf.Password),
+			Transport: tr,
 		}
 		client, err := jira.NewClient(tp.Client(), conf.APIURL)
 		if err != nil {

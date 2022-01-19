@@ -7,4 +7,4 @@ FROM quay.io/prometheus/busybox-linux-amd64:latest
 
 COPY --from=builder /go/src/github.com/prometheus-community/jiralert/jiralert /bin/jiralert
 
-ENTRYPOINT [ "/bin/jiralert" ]
+CMD [ "/bin/jiralert" ]

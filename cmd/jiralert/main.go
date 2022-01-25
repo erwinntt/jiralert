@@ -53,7 +53,7 @@ var (
 
 	// Version is the build version, set by make to latest git tag/hash via `-ldflags "-X main.Version=$(VERSION)"`.
 	Version = "<local build>"
-	Tag     = "1.1-r8"
+	Tag     = "1.1-r10"
 )
 
 func main() {

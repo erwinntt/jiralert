@@ -192,7 +192,7 @@ func (r *Receiver) Notify(data *alertmanager.Data, hashJiraLabel bool) (bool, er
 			if err != nil {
 				return retry, err
 			}
-			level.Debug(r.logger).Log("msg", "returned", "sprint", lastActiveSprint)
+			level.Debug(r.logger).Log("msg", "returned sprint", "id", lastActiveSprint.ID, "name", lastActiveSprint.Name, "state", lastActiveSprint.State)
 		}
 	}
 
@@ -213,7 +213,10 @@ func (r *Receiver) getLastActiveSprint(boardId int, tmpl *template.Template) (*j
 		retry, err := handleJiraErrResponse("Board.GetAllSprintsWithOptions", resp, err, r.logger)
 		return nil, retry, err
 	}
-	level.Debug(r.logger).Log("msg", "returned", "sprints", sprintsList)
+	if len(sprintsList.Values) == 0 {
+		level.Info(r.logger).Log("msg", "No active sprint", "board", boardId)
+		return nil, false, nil
+	}
 	sprint := sprintsList.Values[0]
 	return &sprint, false, nil
 }

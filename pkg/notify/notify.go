@@ -193,7 +193,7 @@ func (r *Receiver) Notify(data *alertmanager.Data, hashJiraLabel bool) (bool, er
 				return retry, err
 			}
 			level.Debug(r.logger).Log("msg", "returned sprint", "id", lastActiveSprint.ID, "name", lastActiveSprint.Name, "state", lastActiveSprint.State)
-			issue.Fields.Unknowns["customfield_10001"] = [1]string{strconv.Itoa(lastActiveSprint.ID)}
+			issue.Fields.Unknowns["customfield_10001"] = lastActiveSprint.ID
 		}
 	}
 

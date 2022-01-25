@@ -17,7 +17,9 @@ import (
 	"crypto/sha512"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -42,9 +44,14 @@ type jiraIssueService interface {
 	DoTransition(ticketID, transitionID string) (*jira.Response, error)
 }
 
+type jiraBoardService interface {
+	GetAllSprintsWithOptions(boardID int, options *jira.GetAllSprintsOptions) (*jira.SprintsList, *jira.Response, error)
+}
+
 // Receiver wraps a specific Alertmanager receiver with its configuration and templates, creating/updating/reopening Jira issues based on Alertmanager notifications.
 type Receiver struct {
 	logger log.Logger
+	board  jiraBoardService
 	client jiraIssueService
 	// TODO(bwplotka): Consider splitting receiver config with ticket service details.
 	conf *config.ReceiverConfig
@@ -54,8 +61,8 @@ type Receiver struct {
 }
 
 // NewReceiver creates a Receiver using the provided configuration, template and jiraIssueService.
-func NewReceiver(logger log.Logger, c *config.ReceiverConfig, t *template.Template, client jiraIssueService) *Receiver {
-	return &Receiver{logger: logger, conf: c, tmpl: t, client: client, timeNow: time.Now}
+func NewReceiver(logger log.Logger, c *config.ReceiverConfig, t *template.Template, board jiraBoardService, client jiraIssueService) *Receiver {
+	return &Receiver{logger: logger, conf: c, tmpl: t, board: board, client: client, timeNow: time.Now}
 }
 
 // Notify manages JIRA issues based on alertmanager webhook notify message.
@@ -177,7 +184,45 @@ func (r *Receiver) Notify(data *alertmanager.Data, hashJiraLabel bool) (bool, er
 		}
 	}
 
+	useLastActiveSprint := getUseLastActiveSprintEnv()
+	if useLastActiveSprint == "yes" {
+		if boardIdS, ok := os.LookupEnv("BOARD_ID"); ok {
+			boardId, _ := strconv.Atoi(boardIdS)
+			lastActiveSprint, retry, err := r.getLastActiveSprint(boardId, r.tmpl)
+			if err != nil {
+				return retry, err
+			}
+			level.Debug(r.logger).Log("msg", "returned", "sprint", lastActiveSprint)
+		}
+	}
+
 	return r.create(issue)
+}
+
+// getLastActiveSprint returns the last active sprint for the board.
+func (r *Receiver) getLastActiveSprint(boardId int, tmpl *template.Template) (*jira.Sprint, bool, error) {
+	level.Debug(r.logger).Log("msg", "search last active sprint id", "board", boardId)
+	options := &jira.GetAllSprintsOptions{
+		State: "active",
+		SearchOptions: jira.SearchOptions{
+			MaxResults: 1,
+		},
+	}
+	sprintsList, resp, err := r.board.GetAllSprintsWithOptions(boardId, options)
+	if err != nil {
+		retry, err := handleJiraErrResponse("Board.GetAllSprintsWithOptions", resp, err, r.logger)
+		return nil, retry, err
+	}
+	level.Debug(r.logger).Log("msg", "returned", "sprints", sprintsList)
+	sprint := sprintsList.Values[0]
+	return &sprint, false, nil
+}
+
+func getUseLastActiveSprintEnv() string {
+	if value, ok := os.LookupEnv("USE_LAST_ACTIVE_SPRINT"); ok {
+		return value
+	}
+	return "no"
 }
 
 // deepCopyWithTemplate returns a deep copy of a map/slice/array/string/int/bool or combination thereof, executing the

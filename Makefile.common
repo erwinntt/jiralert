@@ -88,7 +88,8 @@ GOLANGCI_LINT_VERSION ?= v1.39.0
 # windows isn't included here because of the path separator being different.
 ifeq ($(GOHOSTOS),$(filter $(GOHOSTOS),linux darwin))
 	ifeq ($(GOHOSTARCH),$(filter $(GOHOSTARCH),amd64 i386))
-		GOLANGCI_LINT := $(FIRST_GOPATH)/bin/golangci-lint
+		GOLANGCI_LINT :=
+		# $(FIRST_GOPATH)/bin/golangci-lint
 	endif
 endif
 

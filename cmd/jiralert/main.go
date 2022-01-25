@@ -53,7 +53,7 @@ var (
 
 	// Version is the build version, set by make to latest git tag/hash via `-ldflags "-X main.Version=$(VERSION)"`.
 	Version = "<local build>"
-	Tag     = "1.1-ssl-skip-verify-r5"
+	Tag     = "1.1-r8"
 )
 
 func main() {
@@ -119,7 +119,7 @@ func main() {
 			return
 		}
 
-		if retry, err := notify.NewReceiver(logger, conf, tmpl, client.Issue).Notify(&data, *hashJiraLabel); err != nil {
+		if retry, err := notify.NewReceiver(logger, conf, tmpl, client.Board, client.Issue).Notify(&data, *hashJiraLabel); err != nil {
 			var status int
 			if retry {
 				// Instruct Alertmanager to retry.
